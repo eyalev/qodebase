@@ -295,6 +295,8 @@ function inpVal() { return cInto ? cInto.value : inp.value; }
 // Tap: dictate into that box (live words, then Whisper reads the whole clip); tap again to stop.
 // Long-press: open Talk. The page's Send does what it always did.
 var cInto = null, cMic = null;
+// Typed into a project's composer, these are for Talk (go somewhere, ask something), not a change for the agents.
+var COMPOSER_CMD_RX = /^\s*(please\s+)?(open|show|go to|go back|take me|switch to|scroll|what|what's|whats|how|why|who|where|when|which|is|are|can you|could you|does|do|tell me|list|find|search|read|play|replay|stop|pause|resume|help|ask it|ask the agent)\b/i;
 function wireComposers() {
   var forms = document.querySelectorAll('form.ask, [data-talk-composer]');
   var any = false;
@@ -322,6 +324,26 @@ function wireComposers() {
       e.preventDefault(); e.stopImmediatePropagation();
       trace('cmic', { how: 'send-while-listening' }); f.__sendAfter = 1; stopListen(false, false);
     }, true);
+    // A project's composer (Eyal, 2026-10-14: 'Open the terminal for agent 8' said into it went to the router as a
+    // change): ONE mic on the page and it is Talk's (a spoken change gets Talk's one-line confirm); typed commands go to
+    // Talk; a typed change goes straight to the agents (manager, 2026-10-14).
+    var proj = !!projHere() && f.matches('form.ask');
+    if (proj) {
+      ta.setAttribute('placeholder', 'Ask for a change, or say a command');
+      b.setAttribute('aria-label', 'Talk (hold: hands-free)');
+      f.addEventListener('submit', function (e) {
+        if (listening && cInto === ta) return;
+        var text = ta.value.trim(), img = f.dataset.talkHas === '1' || !!f.querySelector('[data-talk-attachment]');
+        // A typed change goes straight to the agents (manager: don't tax it); a typed command goes to Talk.
+        if (text && !img && COMPOSER_CMD_RX.test(text)) {
+          e.preventDefault(); e.stopImmediatePropagation();
+          trace('composer_to_talk', { text: text.slice(0, 120) });
+          var proto = ta.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          Object.getOwnPropertyDescriptor(proto, 'value').set.call(ta, ''); ta.dispatchEvent(new Event('input', { bubbles: true }));
+          lastSpoken = false; submit(text); return;
+        }
+      }, true);
+    }
     var lp = null, long = false;
     // Long-press: hands-free conversation with Talk, in the one-row bar (it used to open the sheet).
     b.addEventListener('pointerdown', function () { long = false; lp = setTimeout(function () { long = true; unlockAudio(); trace('cmic', { how: 'long' }); try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} if (!convOn()) toggleConv('cmic-long'); else if (!listening && !busy) startListen(); }, 550); });
@@ -331,7 +353,7 @@ function wireComposers() {
       e.preventDefault(); if (long) return; unlockAudio();
       if (listening && cInto === ta) { trace('cmic', { how: 'stop' }); stopListen(false, false); return; }
       if (listening || busy) return;
-      if (convOn()) { trace('cmic', { how: 'conv' }); startListen(); return; }   // hands-free: the words are for Talk, not the box
+      if (convOn() || proj) { trace('cmic', { how: proj ? 'talk' : 'conv' }); startListen(); return; }   // Talk's mic: the words are for Talk, not the box
       if (S.engine !== 'live') { open(true); startListen(); return; }   // the other engines live in the sheet
       cInto = ta; cMic = b; trace('cmic', { how: 'start', path: location.pathname });
       startListen();
@@ -1662,6 +1684,31 @@ function agentTalk(said) {
   var mTerm = /^\s*(please\s+)?(show|open|go to|bring up)\s+(me\s+)?(its|the agent'?s|that agent'?s|his|her|their)\s+(session|terminal|console|screen)\s*[.!?]*\s*$/i.exec(said);
   var mChat = /^\s*(please\s+)?(show|open|go to)\s+(me\s+)?(its|the agent'?s|that agent'?s)\s+(chat|conversation|messages)\s*[.!?]*\s*$/i.exec(said);
   var mAsk = /^\s*(please\s+)?ask\s+(it|the agent|that agent|him|her|them)\s*[:,]?\s*(.{3,})$/i.exec(said);
+  // 'open the terminal for agent 8', 'show agent 8's session', 'open agent 3' (the Board's numbers)
+  var NUMW = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, to: 2, too: 2, for: 4, ate: 8 };
+  var saidN = numberWords(said).replace(/\bagent\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|to|too|for|ate)\b/gi, function (_m, w) { return 'agent ' + NUMW[w.toLowerCase()]; });
+  var mNum = /^\s*(please\s+)?(open|show( me)?|go to|bring up)\b(.*?)\bagent\s+(\d{1,3})\b(.*)$/i.exec(saidN);
+  if (mNum && !pj) return false;
+  if (mNum) {
+    add('you', said); busy = true; status('One moment\u2026');
+    var numN = +mNum[5], termWanted = /\b(terminal|session|console|screen)\b/i.test(said);
+    Promise.all([agentNumbers(pj.owner, pj.name), fetch('/api/p/' + pj.owner + '/' + pj.name, { credentials: 'same-origin' }).then(function (r) { return r.json(); })]).then(function (rs) {
+      var m = rs[0], info = rs[1].info || rs[1], hit = null;
+      for (var k in m) if (m[k] === numN) hit = String(k).replace(/^agent /, '');
+      var ag = hit && (info.agents || []).filter(function (x) { return String(x.id).split('--').pop() === hit; })[0];
+      trace('agent_pick', { by: 'number', n: numN, id: ag && ag.id });
+      if (!ag) { var nt = 'There is no Agent ' + numN + ' on this project.'; add('note', nt); if (lastSpoken) say(nt); return done(); }
+      var a = { id: ag.id, title: agTitle(ag).slice(0, 80), slug: pj.owner + '.' + pj.name, num: numN };
+      var what = a.title.split(':')[0].trim(); if (!/^[A-Z0-9]{2}/.test(what)) what = what.charAt(0).toLowerCase() + what.slice(1);
+      var line = termWanted ? 'Opening Agent ' + numN + '\u2019s terminal. If it was asleep, it is waking up.' : 'This is Agent ' + numN + ', the agent that made ' + what + '.';
+      sset('agent', { id: a.id, title: a.title, slug: a.slug, num: numN, at: Date.now() });
+      add('app', line); if (lastSpoken) say(line);
+      if (openAgentSheet(a, termWanted ? 'term' : 'chat')) return done();
+      sset('agentOpen', { id: a.id, title: a.title, slug: a.slug, mode: termWanted ? 'term' : 'chat', at: Date.now() });
+      busy = false; leave(function () { traceFlush(true); location.assign('/p/' + pj.owner + '/' + pj.name); });
+    }).catch(function () { add('note', 'Could not reach qodebase.'); done(); });
+    return true;
+  }
   if (!pj || !(mOpen || mTerm || mChat || mAsk)) return false;
   if (mOpen && /^(router|review|reviewer)$/i.test(String(mOpen[mOpen.length - 1] || mOpen[5] || '').trim())) return false;
   add('you', said); busy = true; status('One moment\u2026');
@@ -1706,14 +1753,14 @@ function agentTalk(said) {
   return true;
 }
 // The Board's number for an agent (work.js agentNums: changes by creation time; 'agent 7' ids keep their own number).
-function agentNumber(o, n, id) {
+function agentNumber(o, n, id) { return agentNumbers(o, n).then(function (m) { var sh = String(id).split('--').pop(); return m[id] || m['agent ' + sh] || m[sh] || null; }); }
+function agentNumbers(o, n) {
   return fetch('/api/p/' + o + '/' + n + '/landing', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
     var all = ((v && v.changes) || []).slice().sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); }), m = {}, used = {}, k = 1;
     all.forEach(function (c) { var x = /^(?:scripted )?agent[- ](\d+)$/i.exec(c.agent || ''); if (x && !(c.agent in m) && !used[+x[1]]) { m[c.agent] = +x[1]; used[+x[1]] = 1; } });
     all.forEach(function (c) { if (!(c.agent in m)) { while (used[k]) k++; m[c.agent] = k; used[k] = 1; } });
-    var sh = String(id).split('--').pop();   // changes name their agent 'agent <short id>'
-    return m[id] || m['agent ' + sh] || m[sh] || null;
-  }).catch(function () { return null; });
+    return m;   // keys: the changes' agent names ('agent <short id>')
+  }).catch(function () { return {}; });
 }
 var agentWait = null;
 function askAgent(a, q) {
@@ -1765,10 +1812,10 @@ function askAgent(a, q) {
   }).catch(function (e) { add('note', 'Could not reach the agent.'); trace('agent_ask', { id: a.id, ok: false, err: String(e) }); done(); });
 }
 
-function offerOn(text, yes, yesLabel) {
+function offerOn(text, yes, yesLabel, noLabel, noFn) {
   if (convOfferAway(text, yes, yesLabel)) return;   // Conversations: a question for a conversation not on screen waits there
   if (run && text && run.texts[run.texts.length - 1] !== text) run.texts.push(text);
-  offerState = { text: text || '', yes: yes, label: yesLabel || 'Go' };
+  offerState = { text: text || '', yes: yes, label: yesLabel || 'Go', no: noFn || null };
   // A question asked after a spoken turn is said too, short (the quoted request stays on screen), unless something is
   // already being said (a confirm line says itself): in conversation mode it was silent and waited for an unheard yes.
   // ... and when something is still being said, right after it (qb3: 'Build it?' after 'Typed …' was never heard).
@@ -1783,9 +1830,9 @@ function offerOn(text, yes, yesLabel) {
   }
   bOffer.innerHTML = '';
   var by = el('button', { type: 'button', class: 'talk-chip pri' }); by.textContent = yesLabel || 'Go';
-  var bn = el('button', { type: 'button', class: 'talk-chip', 'aria-label': 'No' }); bn.textContent = 'No';
+  var bn = el('button', { type: 'button', class: 'talk-chip', 'aria-label': noLabel || 'No' }); bn.textContent = noLabel || 'No';
   by.onclick = function () { unlockAudio(); trace('offer_tap', { answer: 'yes', where: 'bar' }); offerOff(); yes(); };
-  bn.onclick = function () { trace('offer_tap', { answer: 'no', where: 'bar' }); offerOff(); };
+  bn.onclick = function () { trace('offer_tap', { answer: 'no', where: 'bar' }); offerOff(); if (noFn) noFn(); };
   bOffer.appendChild(by); bOffer.appendChild(bn);
   offer.innerHTML = '';
   var s = el('span'); s.textContent = text || '';
