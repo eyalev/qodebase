@@ -6,7 +6,7 @@ Each agent works on its own fork; each change carries its intent (what it was as
 
 *Words we use:* **land** = merge to main after the tests pass; **replay** (or redo) = redo a collided change's intent on the newest main; **train** = a batch of changes tested together; **lane** = a merge queue for one area of the code; **skeleton** and **contract** = the shared files and the functions modules call in each other, planned before agents start.
 
-**Video (8:15):** https://qodebase.app/video · **How it works:** https://qodebase.app/how
+**Video (8:16):** https://qodebase.app/video · **How it works:** https://qodebase.app/how
 
 **What we proved** (all on Cloudflare):
 - **Thousands of agents, with real models:** 1,000 agents documented VS Code's `src/vs` (4,064 files) with cheap models, each also adding its lines to one shared API index file: 2,794 files landed, 2,791 of them collided on that index and a fixed rule re-inserted each line on the newest main (no model needed), and the index came out complete (5,787 of 5,787 lines, none missing, none twice), for $2.50 ([write-up](docs/contest/fleet-r10k.md)); 201 files got no usable answer from the model and were left unchanged. Across six real codebases the fleet landed 31,466 file changes, ~114 a second in the busiest minute, none touching code.
