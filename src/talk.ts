@@ -26,7 +26,7 @@ import { talkAdmin } from './talkadmin';
 import { recordCost } from './costs';
 import { MERGE_MODEL, mergeMessages, cleanMerge } from './talkmerge';
 import { convOp, convRoute, contextKnowledge } from './talkthreads';
-import { chatSystem, TOOLS, CONTEXT_TOOLS, parseChat, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
+import { chatSystem, TOOLS, CONTEXT_TOOLS, parseChat, validAnswer, ANSWER_MODELS, answerModel, DEFAULT_ANSWER, FALLBACK_ANSWER, PAID_FALLBACK, toGemini, fromGemini, toAnthropic, fromAnthropic, type AnswerModel } from './talkchat';
 import { TALK_VOICE_JS } from './talkvoicejs.gen';
 import { sttText, wordsOnly } from './talkstt';
 import { routeAgentRequest } from 'agents';
@@ -209,14 +209,22 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
   const tm = Date.now();
   // After a "both" sentence the app has already acted (did): answer only, no tools, or it acts again.
   // The chosen answering model (Talk setting; Gemini by default); any failure goes to GLM-4.7-flash for the rest of the turn.
-  let used: AnswerModel = pick.m, fellBack: string | null = pick.why, spentMilli = 0;
+  let used: AnswerModel = pick.m, fellBack: string | null = pick.why, spentMilli = 0, race: any = null;
+  // The hedged default ('fast'): the first model, then its backup racing it after afterMs or at once on an unusable answer;
+  // the first valid answer wins and the rest of the turn stays on the winner. The loser's cost is counted when it lands.
+  const hedged = async (msgs: unknown[], useTools: boolean): Promise<any> => {
+    const r = await hedgedAnswer(env, who, used, msgs as any[], useTools ? tools : null);
+    race = r.race; used = r.winner; spentMilli += r.costMilli;
+    return r.res;
+  };
   const run = async (msgs: unknown[], useTools = !did): Promise<any> => {
     try {
+      if (used.hedge) return await hedged(msgs, useTools);
       const res = await callAnswer(env, used, msgs as any[], useTools ? tools : null);
       spentMilli += costMilli(used, res?.usage);
       return res;
     } catch (e) {
-      if (used.id === FALLBACK_ANSWER) throw e;
+      if (used.id === FALLBACK_ANSWER || used.hedge) throw e;
       log('answer_fallback', { level: 'warn', from: used.id, err: String(e).slice(0, 300) });
       fellBack = `${used.label}: ${/insufficient balance|2021/i.test(String(e)) ? 'out of Cloudflare credits' : String((e as Error)?.message || e).slice(0, 120)}`;
       if (/insufficient balance|2021/i.test(String(e))) creditsMemo = { at: Date.now(), ok: false };
@@ -254,13 +262,13 @@ export async function chatCore(env: Env, who: Who & {}, body: any) {
     return { ok: false as const, http: 502, error: 'model', why: 'The model did not answer. Try again.' };
   }
   const { calls, reply } = out;
-  log('chat', { level: 'info', handle: who.handle, path: s.path, rounds, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c: any) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
+  log('chat', { level: 'info', handle: who.handle, path: s.path, rounds, race, model_ms: Date.now() - tm, total_ms: Date.now() - t0, tools: calls.map((c: any) => c.name), reply_len: reply.length, usage: res?.usage, usage2: res?.usage2 });
   if (spentMilli) {
     await talkLog(env).take('usd_milli', who.handle, Math.ceil(spentMilli)).catch(() => null);
     if (!(who.admin || isOwner(env, who.handle))) await talkLog(env).take('usd_others', 'others', Math.ceil(spentMilli)).catch(() => null);
   }
   return { ok: true as const, reply, actions: calls.map((c: any) => ({ name: c.name, args: c.args })), ms: { model: Date.now() - tm }, left: budget.left, model: used.model, modelLabel: used.label, fellBack,
-    trace: { utterance, model: used.model, chosen: pick.m.id, ...(ctxIn.length ? { context: know.slugs } : {}), fellBack, usd: spentMilli / 1000, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
+    trace: { utterance, model: used.model, chosen: pick.m.id, ...(race ? { won: race.won, race } : {}), ...(ctxIn.length ? { context: know.slugs } : {}), fellBack, usd: spentMilli / 1000, did: body?.did || '', tools: calls.map((c: any) => ({ name: c.name, args: c.args })), reply: String(reply || '').slice(0, 1500), ms: Date.now() - t0 } };
 }
 
 // ---- Answering models (src/talkchat.ts): how each is called, what it costs, who may pick it.
@@ -306,8 +314,45 @@ async function callAnswer(env: Env, m: AnswerModel, messages: any[], tools: any[
     return fromGemini(await r.json());
   }
   if (m.via === 'unified') return fromAnthropic(await (env.AI as any).run(m.model, toAnthropic(messages, tools, 700), UNIFIED));
-  const input: any = { messages, ...(tools ? { tools } : {}), max_tokens: 700, temperature: 0.3, ...(m.thinkingOff ? { chat_template_kwargs: { enable_thinking: false } } : {}) };
+  const input: any = { messages, ...(tools ? { tools } : {}), max_tokens: 700, temperature: m.temperature ?? 0.3, ...(m.thinkingOff ? { chat_template_kwargs: { enable_thinking: false } } : {}) };
   return (env.AI as any).run(m.model, input, aiOpts(env));
+}
+// The hedged default ('fast', manager 2026-10-17): the first model at once, its backup (Talk's budget rules decide which:
+// Haiku, or Gemini when credits or the person's budget are out) after afterMs, or at once when the first answer is
+// unusable (no words, an empty or malformed tool call); the first valid answer wins. The loser keeps running (a binding
+// call cannot be cancelled): its cost is taken from the person's budget when it lands, and the trace says so.
+async function hedgedAnswer(env: Env, who: Who & {}, first: AnswerModel, messages: any[], tools: any[] | null) {
+  const h = first.hedge!, t1 = Date.now();
+  const bk = await pickAnswer(env, who, h.backup);
+  const backup = bk.m.id === first.id ? null : bk.m;
+  const race: any = { first: first.id, backup: backup?.id || null, backupWhy: bk.why || undefined, fired: false, won: null, ms: {} };
+  let costMilli_ = 0, winner: AnswerModel | undefined;
+  const res = await new Promise<any>((resolve, reject) => {
+    let done = false, pending = 0, lastErr: any = null, lastRes: any = null, lastM: AnswerModel = first, timer: any = null;
+    const settle = (m: AnswerModel, r: any) => { done = true; clearTimeout(timer); race.won = m.id; race.totalMs = Date.now() - t1; winner = m; resolve(r); };
+    const go = (m: AnswerModel) => {
+      pending++; const t = Date.now();
+      callAnswer(env, m, messages, tools).then((r) => {
+        pending--; race.ms[m.id] = Date.now() - t;
+        const c = costMilli(m, r?.usage);
+        if (done) { if (c) talkLog(env).take('usd_milli', who.handle, Math.ceil(c)).catch(() => null); return; }
+        costMilli_ += c;
+        if (validAnswer(r)) return settle(m, r);
+        lastRes = r; lastM = m; race.unusable = (race.unusable || []).concat(m.id);
+        if (m === first && backup && !race.fired) fire();
+        else if (!pending) settle(lastM, lastRes);
+      }, (e) => {
+        pending--; race.ms[m.id] = Date.now() - t; lastErr = e; race.errors = (race.errors || []).concat(`${m.id}: ${String(e).slice(0, 80)}`);
+        if (done) return;
+        if (m === first && backup && !race.fired) fire();
+        else if (!pending) { if (lastRes) settle(lastM, lastRes); else { done = true; clearTimeout(timer); reject(lastErr); } }
+      });
+    };
+    const fire = () => { if (done || race.fired || !backup) return; race.fired = true; race.firedAt = Date.now() - t1; go(backup); };
+    go(first);
+    if (backup) timer = setTimeout(fire, h.afterMs);
+  });
+  return { res, race, winner: winner!, costMilli: costMilli_ };
 }
 // The chat bench (admin only; scripts/talk-chat-bench.mjs sends the cases): each case through each answering model with
 // the chat lane's own prompt and tools, first round only; returns the tool calls, the words and the time.
@@ -331,9 +376,10 @@ async function chatBench(request: Request, env: Env, who: Who) {
     const s = cleanScreen(c.screen);
     const messages = [{ role: 'system', content: chatSystem(who.handle, s, String(c.pageText || ''), '') }, { role: 'user', content: String(c.utterance || '') }];
     try {
-      const res = await callAnswer(env, m, messages, TOOLS);
+      const h = m.hedge ? await hedgedAnswer(env, who, m, messages, TOOLS) : null;
+      const res = h ? h.res : await callAnswer(env, m, messages, TOOLS);
       const p = parseChat(res);
-      out.push({ i, model: id, ms: Date.now() - t0, tools: p.calls.map((x: any) => ({ name: x.name, args: x.args })), reply: p.reply.slice(0, 300), usage: res?.usage || null });
+      out.push({ i, model: id, ms: Date.now() - t0, tools: p.calls.map((x: any) => ({ name: x.name, args: x.args })), reply: p.reply.slice(0, 300), usage: res?.usage || null, ...(h ? { won: h.race.won, race: h.race, usdMilli: h.costMilli } : {}) });
     } catch (e) { out.push({ i, model: id, ms: Date.now() - t0, error: String((e as Error)?.message || e).slice(0, 200) }); }
   };
   await Promise.all([worker(), worker(), worker()]);

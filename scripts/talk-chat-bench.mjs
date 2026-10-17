@@ -58,15 +58,19 @@ for (let run = 0; run < RUNS; run++) {
   for (const x of j.results) {
     const [page, utterance, want] = CASES[x.i];
     const v = judge(x, want, page);
-    (score[x.model] ||= { ok: 0, n: 0, ms: [], errors: 0, misses: [] });
-    const s = score[x.model]; s.n++; s.ms.push(x.ms); if (v === 'ok') s.ok++; else { if (v === 'error') s.errors++; s.misses.push(`${utterance} → ${v}${x.error ? ': ' + x.error.slice(0, 80) : ''}`); }
-    fs.appendFileSync(OUT, JSON.stringify({ ts: new Date().toISOString(), model: x.model, page, utterance, verdict: v, ms: x.ms, tools: x.tools, reply: x.reply, usage: x.usage, error: x.error }) + '\n');
+    (score[x.model] ||= { ok: 0, n: 0, ms: [], errors: 0, misses: [], won: {}, usd: [] });
+    const s = score[x.model]; s.n++; s.ms.push(x.ms);
+    if (x.won) s.won[x.won] = (s.won[x.won] || 0) + 1;   // a hedged default ('fast'): which model answered
+    if (x.usdMilli != null) s.usd.push(x.usdMilli / 1000); if (v === 'ok') s.ok++; else { if (v === 'error') s.errors++; s.misses.push(`${utterance} → ${v}${x.error ? ': ' + x.error.slice(0, 80) : ''}`); }
+    fs.appendFileSync(OUT, JSON.stringify({ ts: new Date().toISOString(), model: x.model, page, utterance, verdict: v, ms: x.ms, tools: x.tools, reply: x.reply, usage: x.usage, error: x.error, won: x.won, race: x.race, usdMilli: x.usdMilli }) + '\n');
   }
 }
 const med = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 const p90 = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length * 0.9)]; };
 for (const [m, s] of Object.entries(score)) {
-  console.log(`${m.padEnd(36)} tools right ${s.ok}/${s.n}  median ${med(s.ms)} ms  p90 ${p90(s.ms)} ms${s.errors ? `  errors ${s.errors}` : ''}`);
+  const won = Object.keys(s.won).length ? '  answered by ' + Object.entries(s.won).map(([k, n]) => `${k} ${n}`).join(', ') : '';
+  const usd = s.usd.length ? `  cost/turn $${(s.usd.reduce((a, b) => a + b, 0) / s.usd.length).toFixed(5)} (both models' calls until the winner; a backup that lands later bills on its own)` : '';
+  console.log(`${m.padEnd(36)} tools right ${s.ok}/${s.n}  median ${med(s.ms)} ms  p90 ${p90(s.ms)} ms${s.errors ? `  errors ${s.errors}` : ''}${won}${usd}`);
   for (const x of [...new Set(s.misses)].slice(0, 6)) console.log('    ' + x);
 }
 
