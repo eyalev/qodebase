@@ -10,7 +10,7 @@ used from a desktop too. Every project runs, and every fork comes with its own a
 > every Artifacts repo (namespaces forq, qbfleet*, qbsim). Workers Paid, R2 Paid
 > and Images Stream Basic were cancelled and expire 2026-12-02. qodebase.app
 > (front Worker, personal account) serves a paused page (`PAUSED=1` in
-> front/wrangler.jsonc). projectsbase.dev and ttyview.dev have no Worker now.
+> front/wrangler.jsonc). projectsbase.dev and ttyview.dev moved to the personal account 2026-11-03, no Worker on either.
 > Backups: `~/.local/share/forq-backup-2026-11-03` (4 qbsim repos have none, see NOT-BACKED-UP.txt; git bundles of every main
 > repo, the qodebase-video and attachments R2 objects, repo lists). Reviving it
 > means resubscribing, redeploying every Worker, and restoring repos from bundles.
