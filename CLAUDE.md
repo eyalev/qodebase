@@ -3,6 +3,18 @@
 A Git platform for the age of agents, built entirely on Cloudflare, phone-first and
 used from a desktop too. Every project runs, and every fork comes with its own agents.
 
+> **PAUSED since 2026-11-03 (Eyal: "cancel the forq worker account").** Everything
+> on the forq Cloudflare account was deleted: all Workers (forq, qodebase-talk,
+> qbfleet, qb-board, qbsim-cloud, moltbot-sandbox, the app/ui demos), the 4
+> container apps, R2 buckets, KV, the artifacts-events queue, AI Gateways and
+> every Artifacts repo (namespaces forq, qbfleet*, qbsim). Workers Paid, R2 Paid
+> and Images Stream Basic were cancelled and expire 2026-12-02. qodebase.app
+> (front Worker, personal account) serves a paused page (`PAUSED=1` in
+> front/wrangler.jsonc). projectsbase.dev and ttyview.dev have no Worker now.
+> Backups: `~/.local/share/forq-backup-2026-11-03` (git bundles of every main
+> repo, the qodebase-video and attachments R2 objects, repo lists). Reviving it
+> means resubscribing, redeploying every Worker, and restoring repos from bundles.
+
 Local paths and operator notes (the `<…>` names below): `CLAUDE.local.md` (not in git; Claude Code loads it with this file).
 
 ## Name: qodebase (since 2026-10-06)
