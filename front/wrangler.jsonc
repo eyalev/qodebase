@@ -16,5 +16,5 @@
     { "pattern": "qodebase.app", "custom_domain": true },
     { "pattern": "www.qodebase.app", "custom_domain": true }
   ],
-  "vars": { "ORIGIN": "projectsbase.dev" }
+  "vars": { "ORIGIN": "projectsbase.dev", "PAUSED": "1" }
 }
