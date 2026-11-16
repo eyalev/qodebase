@@ -373,7 +373,7 @@ async function notifyOwner(env: Env, slug: string, kind: 'build-done' | 'decisio
   const u = await userByHandle(env, info.owner).catch(() => null);
   const on = (u?.notify?.[kind === 'decision' ? 'decisions' : 'done']) !== false;
   const push = on && info.owner === env.OWNER_HANDLE;
-  if (push) await pushAlert(env, `qodebase: ${info.name}`, title, `https://${env.UI_HOST}${href}`, 0);
+  if (push) await pushAlert(env, `qodebase: ${info.name}`, title, `https://${env.UI_HOST}${href}`, 0, { topic: kind, level: kind === 'decision' ? 'decide' : undefined });
   log('notify', 'sent', { slug, kind, push, on });
 }
 

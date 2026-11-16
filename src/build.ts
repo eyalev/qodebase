@@ -17,7 +17,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { Env } from './env';
 import { log } from './box';
-import { pushAlert } from './alert';
+import { pushAlert, resolveAlert } from './alert';
 
 export type BuildJob = {
   id: string;
@@ -156,7 +156,14 @@ export class BuildBox extends DurableObject<Env> {
       try { await this.env.Installs.get(this.env.Installs.idFromName(job.install.owner.toLowerCase())).buildDone(result); log('build', 'reported', { install: job.install.installId, ok: result.ok }); }
       catch (e) { log('build', 'report_failed', { install: job.install.installId, err: String(e) }); }
     } else {
-      if (!result.ok && !result.agentId) await pushAlert(this.env, `forq: deploy failed, ${job.slug}`, (result.error || 'no error text').slice(0, 500), `https://${this.env.UI_HOST}/p/${job.slug.replace('.', '/')}`, 0);
+      // A failed deploy is a state: subject per project, taken back by the next good deploy
+      // (the flag keeps a healthy build from calling notify-hub at all).
+      if (!result.ok && !result.agentId) {
+        await pushAlert(this.env, `forq: deploy failed, ${job.slug}`, (result.error || 'no error text').slice(0, 500), `https://${this.env.UI_HOST}/p/${job.slug.replace('.', '/')}`, 0, { topic: 'deploy', subject: `deploy:${job.slug}`, level: 'alarm' });
+        await this.ctx.storage.put(`alert:deploy:${job.slug}`, Date.now());
+      } else if (result.ok && await this.ctx.storage.get(`alert:deploy:${job.slug}`)) {
+        if (await resolveAlert(this.env, 'deploy', `deploy:${job.slug}`, `${job.slug} deployed OK`)) await this.ctx.storage.delete(`alert:deploy:${job.slug}`);
+      }
       try { await this.env.Project.get(this.env.Project.idFromName(job.slug)).buildDone(result); }
       catch (e) { log('build', 'report_failed', { slug: job.slug, err: String(e) }); }
     }

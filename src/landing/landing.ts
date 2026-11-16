@@ -1003,7 +1003,7 @@ export class Landing extends DurableObject<Env> {
     const ids = [...(p?.agents || []).map((a) => a.id), `${m.slug}--router`, `${m.slug}--router2`, ...this.#reviewers({ ...m, flags: { ...m.flags, reviewers: 8 } })];
     for (const id of ids) await fetch(`${this.env.API_BASE}/api/agents/${id}/stop`, { method: 'POST', headers: { 'x-forq-secret': this.env.ADMIN_SECRET, 'user-agent': 'forq-internal/1' } }).catch(() => null);
     log('landing', 'halted', { slug: m.slug, why, stopped: ids.length });
-    await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace('.', '/')}/work`, 0).catch(() => {});
+    await pushAlert(this.env, `qodebase: ${m.slug} halted`, why, `https://${this.env.UI_HOST}/p/${m.slug.replace('.', '/')}/work`, 0, { topic: 'halted', subject: `halted:${m.slug}`, level: 'alarm' }).catch(() => {});
   }
 
   /** Messages to real agents (bounce: fix it; conflict: redo it; the router: decide). From

@@ -140,7 +140,7 @@ export async function claimHandle(env: Env, email: string, handle: string): Prom
   const user: User = { email: email.toLowerCase(), handle, createdAt: Date.now() };
   await registry(env).putUser(user);
   log('auth', 'user_created', { handle });
-  if (!taken) await pushAlert(env, 'qodebase: new sign-up', `${handle} (${user.email}) chose a name on qodebase.`, `https://${env.UI_HOST}/`);
+  if (!taken) await pushAlert(env, 'qodebase: new sign-up', `${handle} (${user.email}) chose a name on qodebase.`, `https://${env.UI_HOST}/`, 0, { topic: 'signup' });
   return { ok: true, user };
 }
 
