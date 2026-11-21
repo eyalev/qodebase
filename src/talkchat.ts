@@ -62,7 +62,9 @@ export const ANSWER_MODELS: AnswerModel[] = [
   { id: 'gemini', label: 'Gemini 3.1 Flash-Lite', model: 'gemini-3.1-flash-lite', via: 'gemini', usdIn: 0.25, usdOut: 1.5 },
   // The best tool-caller of the bigger Workers AI models on the chat bench (2026-10-13, 12 cases x 2): DeepSeek V4 Flash
   // 22/24 (median 2.8 s); gpt-oss-120b 18/24, glm-5.3-flash 21/24 (9.4 s), qwen3.8-27b 20/24 (9.0 s).
-  { id: 'big', label: 'DeepSeek V4 Flash (Workers AI)', model: '@cf/deepseek-ai/deepseek-v4-flash-0731', via: 'workers', usdIn: 0.44, usdOut: 1.32 },
+  // V4 Flash 0731 was retired by Cloudflare on 2026-11-20 (HTTP 410); V4.1 Flash 1017, thinking off, calls tools right
+  // (run API, 2026-11-21). Not re-benched on the chat bench yet.
+  { id: 'big', label: 'DeepSeek V4.1 Flash (Workers AI)', model: '@cf/deepseek-ai/deepseek-v4.1-flash-1017', via: 'workers', usdIn: 0.30, usdOut: 1.20, thinkingOff: true },
   // Temperature 0 + thinking off: 24/24 on the chat bench (2026-10-17; 22/24 at 0.3).
   { id: 'glm', label: 'GLM-4.7-flash (Workers AI, cheapest)', model: '@cf/zai-org/glm-4.7-flash', via: 'workers', usdIn: 0.0605, usdOut: 0.4, thinkingOff: true, temperature: 0 },
   // Everyone's default since 2026-10-17 (manager): GLM first; no valid answer within 1.5 s (or an empty / malformed tool
