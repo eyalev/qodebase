@@ -550,6 +550,14 @@ and its repo is public (Apache-2.0). Done, in `src/baseline.ts` unless noted:
 - `/version.json`, robots.txt, crawler gate, admin behind the admin secret on
   workers.dev, observability on (forq and the variants).
 
+**While paused (since 2026-11-21):** the `front/` Worker (`qodebase-front`, personal account)
+serves the baseline itself: `/health.json` and `/version.json` (sha = deploy `--tag`, no
+checks beyond "paused"), `/about`, `/privacy` (static pages, no cookies/analytics; contact
+hello@kapps.dev), robots.txt (Allow + Sitemap) + `/sitemap.xml`, og:image `front/public/og.png`.
+Deploy: `cd front && CLOUDFLARE_API_TOKEN=$(cat ~/.config/cloudflare/deploy-token)
+CLOUDFLARE_ACCOUNT_ID=<personal account id> npx wrangler deploy --tag "$(git rev-parse --short HEAD)"`.
+It is a separate Worker, so deploying it touches no forq containers. Feedback stays a skip.
+
 Not yet, and why:
 - `noindex` stays on every page and verified bots get only the front page:
   pre-launch. At launch, remove `noindex` and revisit the gate (the baseline
