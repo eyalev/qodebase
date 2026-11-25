@@ -557,6 +557,13 @@ hello@kapps.dev), robots.txt (Allow + Sitemap) + `/sitemap.xml`, og:image `front
 Deploy: `cd front && CLOUDFLARE_API_TOKEN=$(cat ~/.config/cloudflare/deploy-token)
 CLOUDFLARE_ACCOUNT_ID=<personal account id> npx wrangler deploy --tag "$(git rev-parse --short HEAD)"`.
 It is a separate Worker, so deploying it touches no forq containers. Feedback stays a skip.
+**Mail (2026-11-25):** the published address is **hello@qodebase.app** (front pages, and forq's dormant
+src/baseline.ts + src/ui.ts). Email Routing on the qodebase.app zone (personal account), rule `hello`
+(literal to hello@qodebase.app -> Worker `qodebase-front`); the catch-all stays drop/disabled.
+Handler `front/email.js` (copied from qonttent: forward to eyalev@gmail.com first, header triage, a
+notify-hub push topic `email` level `decide` via `front/alert.js`, app `forq`, secret NOTIFY_TOKEN;
+ratelimit EMAIL_PUSH_LIMIT namespace 2611). Log: JSONL `module: 'email-in'` in the qodebase-front
+Workers Logs. SPF includes _spf.google.com; `_dmarc` TXT `v=DMARC1; p=none`.
 
 Not yet, and why:
 - `noindex` stays on every page and verified bots get only the front page:
