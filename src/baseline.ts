@@ -175,7 +175,7 @@ export async function feedback(request: Request, env: BaselineEnv): Promise<Resp
   // Not stored: this push is the only copy, so it carries the whole text.
   log('feedback_store_failed', { status: r?.status ?? 0, body: r ? (await r.text().catch(() => '')).slice(0, 200) : '' });
   await pushAlert(env, 'qodebase feedback NOT stored', `${o.kind} from ${o.email || 'no email'} on ${o.from}:\n${o.msg}`, body.page, 1, { topic: 'feedback', level: 'alarm' });
-  return page({ ...o, error: 'It did not go through on our side. Your text is still here: try again, or email hello@kapps.dev.' }, 502);
+  return page({ ...o, error: 'It did not go through on our side. Your text is still here: try again, or email hello@qodebase.app.' }, 502);
 }
 
 /* ------------------------------------------------------------------ health */

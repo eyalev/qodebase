@@ -9,7 +9,11 @@
 // robots.txt + /sitemap.xml and an og:image (public/og.png, served as a static asset). Feedback
 // is a Baseline skip in CLAUDE.md. Deploy with --tag "$(git rev-parse --short HEAD)" so the sha
 // shows.
-const CONTACT = 'hello@kapps.dev';
+// hello@qodebase.app: Email Routing rule -> this Worker's email handler (email.js) -> Gmail + a push.
+import { handleEmail } from './email.js';
+import { alert } from './alert.js';
+
+const CONTACT = 'hello@qodebase.app';
 const HEAD = (title, desc, path) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title}</title>
@@ -55,8 +59,10 @@ const PAGES = {
 ` + FOOT,
   '/privacy': HEAD('Privacy · qodebase', 'What this paused page keeps about you: nothing beyond standard request logs.', '/privacy') + `
 <h1>Privacy</h1>
-<p>Last updated 21 November 2026.</p>
+<p>Last updated 25 November 2026.</p>
 <p>qodebase is paused. This site is a few static pages: there are no accounts, no sign-in, no forms, no cookies and no analytics.</p>
+<h2>Email</h2>
+<p>Mail you send to ${CONTACT} is forwarded to the maintainer's Gmail inbox; this site keeps no copy. A short alert with the sender and subject is sent to his phone (through Pushover) so a person sees it soon.</p>
 <h2>What is kept</h2>
 <p>Cloudflare, which serves these pages, keeps short-lived request logs (time, page, a coarse location and the kind of browser) so we can see that the site works. They are not used for anything else and are deleted after a few days.</p>
 <h2>Earlier accounts</h2>
@@ -86,6 +92,8 @@ function pausedResponse(url, env) {
 }
 
 export default {
+  // hello@qodebase.app: forward to Gmail, push if a person wrote (email.js).
+  email: (message, env, ctx) => handleEmail(message, env, ctx, { alert }),
   async fetch(request, env) {
     const url = new URL(request.url);
     if (env.PAUSED === '1') {

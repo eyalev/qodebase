@@ -18,5 +18,7 @@
     { "pattern": "qodebase.app", "custom_domain": true },
     { "pattern": "www.qodebase.app", "custom_domain": true }
   ],
+  // Pushes for mail to hello@ (email.js), per location per minute; namespace_id unique in the account.
+  "ratelimits": [{ "name": "EMAIL_PUSH_LIMIT", "namespace_id": "2611", "simple": { "limit": 6, "period": 60 } }],
   "vars": { "ORIGIN": "projectsbase.dev", "PAUSED": "1" }
 }

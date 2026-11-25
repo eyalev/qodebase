@@ -467,7 +467,7 @@ ${selfHost ? '' : li('Your own copy', "Needs Cloudflare's Workers Paid plan: $5 
 <h2>From a terminal or an agent</h2>
 <p class="desc"><a href="/cli">qb</a>, the command line, does everything the site does. Agents can read <a href="/llms.txt">llms.txt</a>.</p>
 <h2>Contact</h2>
-<p class="desc">${selfHost ? '' : 'hello@kapps.dev, or '}the <a href="/feedback?from=/about">feedback form</a>.</p>
+<p class="desc">${selfHost ? '' : 'hello@qodebase.app, or '}the <a href="/feedback?from=/about">feedback form</a>.</p>
 <style>.abl{list-style:none;padding:0;margin:0 0 8px}.abl li{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}.abl li:last-child{border-bottom:0}.abl b{font-weight:600;font-size:16px}.abl span{color:var(--dim);font-size:15px}</style>`);
 }
 
@@ -480,5 +480,5 @@ export function privacyPage() {
 <p class="desc">Visits are counted with our own analytics (kstats), sent to qodebase itself and not to a third party: the pages you open, the buttons and links you tap, the kind of device and the country. Your IP address is used once to make a visitor code that changes every day, and is not stored. No ad trackers.</p>
 <p class="desc">The <a href="/feedback">feedback form</a> keeps your message, the page you sent it from, the kind of device, and your email only if you give one.</p>
 <p class="desc">Talk (the voice bar): what you say is turned into text on Cloudflare (Workers AI). The sentence goes through Cloudflare's AI Gateway to the model that decides what to do (Workers AI) and the model that answers: Anthropic's Claude by default, Google's Gemini or a Workers AI model if you pick one or a daily limit is reached. Spoken replies are made on Cloudflare too. Nothing of it is kept unless you turn on <b>Help improve Talk</b> in Talk's settings (off by default): then the words you said, what Talk heard and decided, and what it did are kept for 14 days so we can make it better. Your voice recordings are never kept.</p>
-<p class="desc">Your agents' requests go to Anthropic under your Claude plan or API key and Anthropic's terms. To delete your account and data, write to hello@kapps.dev.</p>`);
+<p class="desc">Your agents' requests go to Anthropic under your Claude plan or API key and Anthropic's terms. To delete your account and data, write to hello@qodebase.app.</p>`);
 }
